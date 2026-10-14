@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Cue Master - 獨立專用字幕投影螢幕 (Dedicated Subtitle Screen)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      overflow: hidden;
+      cursor: none;
+    }
+    #screen-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000000;
+    }
+    .subtitle-layer {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.08s ease-out;
+      opacity: 0;
+      padding: 0 40px;
+    }
+    .subtitle-layer.pos-bottom {
+      bottom: 8%;
+      top: auto;
+      transform: none;
+    }
+    .subtitle-layer.pos-center {
+      top: 50%;
+      bottom: auto;
+      transform: translateY(-50%);
+    }
+    .subtitle-layer.pos-top {
+      top: 8%;
+      bottom: auto;
+      transform: none;
+    }
+    .subtitle-box {
+      max-width: 92%;
+      text-align: center;
+      padding: 10px 32px;
+      border-radius: 8px;
+    }
+    #subtitle-main {
+      font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      font-weight: 700;
+      font-size: 52px;
+      line-height: 1.35;
+      color: #FFFFFF;
+      letter-spacing: 2px;
+      word-break: break-word;
+    }
+    #subtitle-sub {
+      font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      font-size: 30px;
+      line-height: 1.25;
+      color: #E2E8F0;
+      margin-top: 8px;
+      letter-spacing: 1px;
+      word-break: break-word;
+    }
+    #fs-hint {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      background: rgba(30, 41, 59, 0.85);
+      color: #94a3b8;
+      border: 1px solid #475569;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: sans-serif;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    body:hover #fs-hint {
+      opacity: 0.8;
+      cursor: default;
+    }
+    #fs-hint:hover {
+      opacity: 1 !important;
+      background: #334155;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="screen-container">
+    <div id="subtitle-layer" class="subtitle-layer pos-center">
+      <div id="subtitle-box" class="subtitle-box">
+        <div id="subtitle-main"></div>
+        <div id="subtitle-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="fs-hint">點此或按 F11 進入全螢幕 (字幕投影模式)</button>
+
+  <script>
+    const subtitleLayer = document.getElementById('subtitle-layer');
+    const subtitleBox = document.getElementById('subtitle-box');
+    const subtitleMain = document.getElementById('subtitle-main');
+    const subtitleSub = document.getElementById('subtitle-sub');
+    const fsBtn = document.getElementById('fs-hint');
+
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    let ws = null;
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'REGISTER', role: 'stage' }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'SUBTITLE_SHOW') {
+            show(msg);
+          } else if (msg.type === 'SUBTITLE_CLEAR' || msg.type === 'STAGE_PANIC') {
+            clear();
+          } else if (msg.type === 'SUBTITLE_STYLE') {
+            applyStyle(msg);
+          }
+        } catch (e) {}
+      };
+
+      ws.onclose = () => {
+        setTimeout(connect, 1500);
+      };
+    }
+
+    function show(data) {
+      if (!data || (!data.text && !data.subText)) {
+        clear();
+        return;
+      }
+      applyStyle(data);
+      subtitleMain.textContent = data.text || '';
+      if (data.subText) {
+        subtitleSub.textContent = data.subText;
+        subtitleSub.style.display = 'block';
+      } else {
+        subtitleSub.textContent = '';
+        subtitleSub.style.display = 'none';
+      }
+      subtitleLayer.style.opacity = '1';
+    }
+
+    function clear() {
+      subtitleLayer.style.opacity = '0';
+      setTimeout(() => {
+        if (subtitleLayer.style.opacity === '0') {
+          subtitleMain.textContent = '';
+          subtitleSub.textContent = '';
+        }
+      }, 80);
+    }
+
+    function applyStyle(style = {}) {
+      if (style.position) {
+        subtitleLayer.classList.remove('pos-bottom', 'pos-center', 'pos-top');
+        subtitleLayer.classList.add(`pos-${style.position}`);
+      }
+      if (style.fontSize) {
+        subtitleMain.style.fontSize = `${style.fontSize}px`;
+        subtitleSub.style.fontSize = `${Math.round(style.fontSize * 0.58)}px`;
+      }
+    }
+
+    connect();
+  </script>
+</body>
+</html>

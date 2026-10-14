@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Cue Master - 舞台輸出螢幕 (Stage Output)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      overflow: hidden;
+      cursor: none; /* 隱藏滑鼠游標 */
+    }
+    #stage-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000000;
+    }
+    .media-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      transition: opacity 0.1s linear;
+      opacity: 0;
+    }
+    #video-player {
+      z-index: 10;
+    }
+    #image-viewer {
+      z-index: 20;
+    }
+    /* 專業劇場字幕層 */
+    .subtitle-layer {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      pointer-events: none;
+      transition: opacity 0.08s ease-out;
+      opacity: 0;
+      padding: 0 40px;
+    }
+    .subtitle-layer.pos-bottom {
+      bottom: 6%;
+      top: auto;
+      transform: none;
+    }
+    .subtitle-layer.pos-center {
+      top: 50%;
+      bottom: auto;
+      transform: translateY(-50%);
+    }
+    .subtitle-layer.pos-top {
+      top: 6%;
+      bottom: auto;
+      transform: none;
+    }
+    /* 靠右對齊 (歌詞靠右：徹底移除多餘黑底色塊，字體加上高對比黑邊陰影) */
+    .subtitle-layer.align-right {
+      justify-content: flex-end !important;
+      padding-right: 6% !important;
+      padding-left: 0 !important;
+    }
+    .subtitle-layer.align-right .subtitle-box {
+      text-align: right !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .subtitle-layer.align-right #subtitle-main {
+      text-align: right !important;
+      text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+        -3px  0px 4px #000,
+         3px  0px 4px #000,
+         0px  3px 8px rgba(0,0,0,0.95);
+    }
+    /* 靠左對齊 (歌詞靠左：徹底移除多餘黑底色塊) */
+    .subtitle-layer.align-left {
+      justify-content: flex-start !important;
+      padding-left: 6% !important;
+      padding-right: 0 !important;
+    }
+    .subtitle-layer.align-left .subtitle-box {
+      text-align: left !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .subtitle-layer.align-left #subtitle-main {
+      text-align: left !important;
+      text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+        -3px  0px 4px #000,
+         3px  0px 4px #000,
+         0px  3px 8px rgba(0,0,0,0.95);
+    }
+    /* 居中對齊 (一般台詞) */
+    .subtitle-layer.align-center {
+      justify-content: center !important;
+      padding-left: 40px !important;
+      padding-right: 40px !important;
+    }
+    .subtitle-layer.align-center .subtitle-box {
+      text-align: center !important;
+    }
+    .subtitle-layer.align-center #subtitle-main {
+      text-align: center !important;
+    }
+    .subtitle-box {
+      max-width: 90%;
+      text-align: center;
+      padding: 10px 32px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(2px);
+      transition: background 0.2s ease;
+    }
+    .subtitle-box.no-bg {
+      background: transparent;
+      backdrop-filter: none;
+    }
+    #subtitle-main {
+      font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      font-weight: 700;
+      font-size: 46px;
+      line-height: 1.45;
+      color: #FFFFFF !important;
+      white-space: pre-line; /* 支援一頁多行換行 */
+      text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0px  3px 8px rgba(0,0,0,0.9);
+      letter-spacing: 2px;
+      word-break: break-word;
+    }
+    /* 全螢幕切換提示鈕 (滑鼠移動時短暫出現) */
+    #fs-hint {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      background: rgba(30, 41, 59, 0.85);
+      color: #94a3b8;
+      border: 1px solid #475569;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: sans-serif;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    body:hover #fs-hint {
+      opacity: 0.8;
+      cursor: default;
+    }
+    #fs-hint:hover {
+      opacity: 1 !important;
+      background: #334155;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage-container">
+    <video id="video-player" class="media-layer" playsinline preload="auto"></video>
+    <img id="image-viewer" class="media-layer" alt="Stage Image" />
+    <div id="subtitle-layer" class="subtitle-layer pos-bottom align-center">
+      <div id="subtitle-box" class="subtitle-box">
+        <div id="subtitle-main"></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="fs-hint">點此或按 F11 進入全螢幕 (Stage Mode)</button>
+
+  <script src="/stage.js"></script>
+</body>
+</html>

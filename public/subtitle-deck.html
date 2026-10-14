@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cue Master - 舞台即時字幕控制台 (Subtitle Deck)</title>
+  <link rel="stylesheet" href="/subtitle-deck.css">
+</head>
+<body>
+  <!-- 頂部狀態列 -->
+  <header class="top-bar">
+    <div class="brand-section">
+      <span class="brand-title">🎭 字幕播控台 <small style="font-size:12px;color:#94a3b8;font-weight:normal;">Subtitle Deck</small></span>
+      <span id="badge-ws" class="badge-live">WS: 離線</span>
+      <span id="badge-stage" class="badge-live">舞台投影: 離線</span>
+    </div>
+
+    <div class="status-stats">
+      <span>目前進度：<strong id="stat-index" style="color:#fbbf24;">--</strong> / <span id="stat-total">0</span></span>
+    </div>
+
+    <div class="top-actions">
+      <label class="btn-top" style="cursor:pointer; background:#2563eb; color:#fff; border-color:#1d4ed8;" title="從電腦載入 .txt 字幕檔">
+        📂 載入字幕檔 (.txt)
+        <input type="file" id="direct-file-input" accept=".txt" style="display:none;">
+      </label>
+      <button id="btn-open-load-modal" class="btn-top">✏️ 編輯/貼上劇本</button>
+      <button id="btn-load-demo" class="btn-top">🎭 載入示範劇本</button>
+      <a href="/stage" target="_blank" class="btn-top" style="text-decoration:none;" title="外接主投影機：影片/背景+字幕即時合成輸出">🖥️ 舞台螢幕 (同屏合成)</a>
+      <a href="/subtitle-screen" target="_blank" class="btn-top" style="text-decoration:none;" title="外接第二投影機：純黑底白字字幕專用輸出">📺 獨立字幕螢幕 (純字幕)</a>
+    </div>
+  </header>
+
+  <!-- 提示訊息 Toast -->
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <!-- 主工作區 -->
+  <main class="main-workspace">
+    <!-- HUD 播映監控視窗 -->
+    <section class="hud-container">
+      <!-- 上一句 -->
+      <div class="hud-row prev">
+        <div class="hud-label">PREV 上一句</div>
+        <div id="hud-prev-text" class="hud-content">（無上一句）</div>
+      </div>
+
+      <!-- 當前正在播映句 (ON-AIR) -->
+      <div id="hud-on-air-row" class="hud-row on-air active">
+        <div class="hud-badge-container">
+          <span id="badge-onair-status" class="badge-onair live">ON-AIR</span>
+        </div>
+        <div class="on-air-text-wrap">
+          <div id="hud-current-main" class="on-air-main">請載入劇本或按 GO 開始</div>
+          <div id="hud-current-sub" class="on-air-sub" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- 下一句待命 -->
+      <div class="hud-row next">
+        <div class="hud-label">NEXT 下一句</div>
+        <div id="hud-next-text" class="hud-content">-- 待命 --</div>
+      </div>
+    </section>
+
+    <!-- 下半部：劇本清單與右側操作板 -->
+    <div class="control-area">
+      <!-- 劇本清單 -->
+      <div id="script-list" class="script-list-container">
+        <!-- 台詞條目將由 JS 動態生成 -->
+      </div>
+
+      <!-- 右側快捷操作板 -->
+      <aside class="action-pad">
+        <div class="action-header">
+          <span>即時操作面板</span>
+          <span style="font-size:11px;font-weight:normal;">鍵盤 / 點擊</span>
+        </div>
+
+        <div class="pad-buttons">
+          <!-- 下一句 (GO) -->
+          <button id="btn-go" class="btn-action btn-go" title="下一句 (PageDown)">
+            <span>GO 下一句</span>
+            <span class="shortcut-hint">[PageDown]</span>
+          </button>
+
+          <!-- 隱藏字幕 (BLANK) -->
+          <button id="btn-blank" class="btn-action btn-blank" title="清空/黑幕 (B / Esc)">
+            <span id="label-blank">BLANK 黑幕隱藏</span>
+            <span class="shortcut-hint">[B] 鍵</span>
+          </button>
+
+          <!-- 上一句 (BACK) -->
+          <button id="btn-back" class="btn-action btn-back" title="回上一句 (PageUp / ↑)">
+            <span>BACK 上一句</span>
+            <span class="shortcut-hint">[PageUp] 或 [↑]</span>
+          </button>
+        </div>
+
+        <!-- 舞台顯示外觀快速設定 -->
+        <div class="settings-box">
+          <div style="font-size:12px;font-weight:700;color:#94a3b8;border-bottom:1px solid #334155;padding-bottom:4px;">
+            舞台字幕樣式設定
+          </div>
+          
+          <div class="setting-row">
+            <span>垂直位置</span>
+            <select id="select-pos">
+              <option value="bottom" selected>底部 (Bottom)</option>
+              <option value="center">置中 (Center)</option>
+              <option value="top">頂部 (Top)</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <span>字體大小 (<span id="val-font-size">46</span>px)</span>
+            <input type="range" id="range-font-size" min="28" max="72" value="46" style="width:110px;">
+          </div>
+
+          <div class="setting-row">
+            <span>黑底襯條</span>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="check-bg" checked> 啟用
+            </label>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 載入劇本 Modal -->
+  <div id="modal-load" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>📖 載入或編輯劇本 (Load Script)</span>
+        <button id="btn-close-modal" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <label class="btn-top" style="cursor:pointer;">
+            📂 選擇檔案 (.txt)
+            <input type="file" id="file-input" accept=".txt" style="display:none;">
+          </label>
+          <span style="font-size:12px;color:#94a3b8;">支援每行一句或空行分段 TXT 格式，可用 [歌詞靠右]、[歌詞靠左] 標註對齊</span>
+        </div>
+
+        <textarea id="textarea-script" placeholder="在此貼上劇本文字，一行一句或空行分段...&#10;例：&#10;大姊：妳們到底什麼時候才要回家？&#10;二姊：我手頭上還有個專案要趕。&#10;&#10;[歌詞靠右]&#10;天頂的白雲飄啊飄&#10;想著故鄉的三姊妹"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-modal" class="btn-top">取消</button>
+        <button id="btn-confirm-load" class="btn-top" style="background:#10b981;color:#fff;border-color:#059669;">套用並載入</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/subtitle-deck.js"></script>
+</body>
+</html>

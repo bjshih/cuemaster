@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Cue Master - 專業劇場影音播放與編輯控制台</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="mode-show-active">
+
+  <!-- 頂部主導航列 (Main Header) -->
+  <header>
+    <div class="brand">
+      <h1>🎭 Cue Master</h1>
+      <span class="badge" id="project-title" title="點擊更名" style="cursor: pointer;">尚未載入專案</span>
+      <button id="btn-switch-project" class="btn-sm-launcher" title="切換或開啟專案 (Project Launcher)">🎭 專案啟動台</button>
+    </div>
+
+    <!-- 模式切換按鈕組 -->
+    <div class="mode-switcher">
+      <button id="btn-mode-show" class="mode-btn active" title="進入安全演出模式，鎖定編輯，專注 GO/Panic 觸發">
+        ▶️ 演出播放 (Show)
+      </button>
+      <button id="btn-mode-edit" class="mode-btn" title="進入專案編輯模式，自由調整、新增 Cue 與素材關聯">
+        ✏️ 專案編輯 (Edit)
+      </button>
+    </div>
+
+    <!-- 播放模式傳輸控制列 (Transport Controls) -->
+    <div class="transport-controls" id="transport-controls">
+      <button id="btn-go" class="btn-go" title="按下空白鍵觸發 (Space)">GO</button>
+      <button id="btn-panic" class="btn-panic" title="連按兩次 Esc 全場淡出緊急煞車">PANIC</button>
+      <button id="btn-stop" class="btn-stop" title="全部停止並清除所有執行狀態，回到準備狀態">STOP</button>
+    </div>
+
+    <!-- 狀態資訊與舞台視窗 -->
+    <div class="status-info">
+      <div class="status-pill">
+        <span class="status-dot" id="stage-status-dot"></span>
+        <span id="stage-status-text">舞台螢幕等待連線</span>
+      </div>
+      <button id="btn-open-stage" class="btn-stage">🖥️ 開啟舞台螢幕</button>
+      <button id="btn-open-subtitles" class="btn-stage" style="background: #2563eb;" title="開啟舞台即時字幕控制台">💬 字幕控制台</button>
+      <div id="clock-display" style="font-family: monospace; font-size: 1rem; color: #cbd5e1;">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- 編輯模式專屬工具列 (Edit Toolbar) -->
+  <nav class="edit-toolbar" id="edit-toolbar">
+    <div class="toolbar-group">
+      <span class="toolbar-label">專案</span>
+      <button id="btn-proj-new" class="tool-btn" title="建立全新空白專案">📄 新增</button>
+      <button id="btn-proj-open" class="tool-btn" title="載入 QLab 5 / Cue Master 專案檔">📂 開啟...</button>
+      <button id="btn-proj-save" class="tool-btn btn-highlight" title="儲存目前專案 (Ctrl+S)">💾 儲存</button>
+      <button id="btn-proj-export-qlab" class="tool-btn" title="匯出為標準 QLab 5 二進位專案檔 (.qlab5)">⬇️ 導出 QLab5</button>
+      <button id="btn-proj-reload-sample" class="tool-btn" title="重新載入《星星月月》示範專案">🎭 星星月月範本</button>
+      <button id="btn-toolbar-media" class="tool-btn" title="開啟專案素材庫瀏覽器與目錄設定">📁 素材資料夾</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <span class="toolbar-label">新增 Cue</span>
+      <button id="btn-add-group" class="tool-btn tag-group" title="新增群組 (Group Cue)">📁 +群組</button>
+      <button id="btn-add-audio" class="tool-btn tag-audio" title="新增音訊 (Audio Cue)">🎵 +音訊</button>
+      <button id="btn-add-video" class="tool-btn tag-video" title="新增視訊/影片 (Video Cue)">🎬 +視訊</button>
+      <button id="btn-add-image" class="tool-btn tag-image" title="新增純圖片/靜態投影 (Image Cue)">🖼️ +圖片</button>
+      <button id="btn-add-fade" class="tool-btn tag-fade" title="新增淡化 (Fade Cue)">🎚️ +淡化</button>
+      <button id="btn-add-stop" class="tool-btn tag-stop" title="新增停止 (Stop Cue)">⏹️ +停止</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <span class="toolbar-label">Cue 結構</span>
+      <button id="btn-cue-move-up" class="tool-btn" title="上移 (Alt+↑)">⬆️ 上移</button>
+      <button id="btn-cue-move-down" class="tool-btn" title="下移 (Alt+↓)">⬇️ 下移</button>
+      <button id="btn-cue-indent" class="tool-btn" title="縮排移入上一群組">➡️ 縮排</button>
+      <button id="btn-cue-outdent" class="tool-btn" title="凸排移出群組">⬅️ 凸排</button>
+      <button id="btn-cue-duplicate" class="tool-btn" title="複製選取 Cue (Ctrl+D)">📋 複製</button>
+      <button id="btn-cue-delete" class="tool-btn btn-danger" title="刪除選取 Cue (Delete)">🗑️ 刪除</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <span class="toolbar-label">試聽</span>
+      <button id="btn-cue-audition" class="tool-btn btn-audition" title="單獨試播選取的 Cue">▶️ 試聽</button>
+      <button id="btn-cue-audition-stop" class="tool-btn" title="停止試播">⏹️ 停止</button>
+    </div>
+  </nav>
+
+  <!-- 主要工作區 (Run Show 模式下：左側 Cue 清單，右側即時字幕控制台) -->
+  <main class="main-run-show-workspace">
+    <!-- 左側：Cue 控制台 (Cue Deck) -->
+    <div class="cue-deck-section">
+      <!-- Cue 清單表頭 -->
+      <div class="cue-table-header" id="cue-table-header">
+        <div></div>
+        <div>編號 #</div>
+        <div>類型</div>
+        <div>預先等待</div>
+        <div>時間</div>
+        <div>接續</div>
+        <div>名稱 (Cue Name)</div>
+        <div>素材路徑 (Target)</div>
+      </div>
+      <!-- Cue 列表容器 -->
+      <div id="cue-list-container" class="cue-list-container">
+        <!-- Cues will be dynamically rendered here -->
+      </div>
+    </div>
+
+    <!-- 右側：整合式即時字幕控制台 (Run Show Subtitle Deck) -->
+    <aside id="run-show-sub-panel" class="run-show-sub-panel">
+      <!-- 頂部資訊與控制列 -->
+      <div class="sub-panel-top">
+        <div class="sub-panel-title">
+          <span>💬 即時字幕播控台</span>
+          <span id="panel-sub-progress" class="sub-progress-tag">進度: 0 / 0</span>
+        </div>
+        <div class="sub-panel-actions">
+          <label class="btn-sub-tool" title="從電腦載入 .txt 字幕檔">
+            📂 載入
+            <input type="file" id="panel-sub-file-input" accept=".txt" style="display:none;">
+          </label>
+          <button id="panel-sub-demo-btn" class="btn-sub-tool" title="載入《星星月月》示範劇本">🎭 範例</button>
+        </div>
+      </div>
+
+      <!-- HUD 監控視窗 (上一句 / 當前 ON-AIR / 下一句) -->
+      <div class="sub-panel-hud">
+        <div class="hud-mini-row">
+          <span class="hud-mini-tag">PREV</span>
+          <span id="panel-sub-prev-text" class="hud-mini-text">（無上一句）</span>
+        </div>
+
+        <div id="panel-sub-onair-box" class="hud-onair-card active">
+          <div class="hud-onair-badge-bar">
+            <span id="panel-sub-onair-badge" class="badge-onair live">ON-AIR</span>
+            <span style="font-size:11px;color:#94a3b8;">舞台當前播映</span>
+          </div>
+          <div id="panel-sub-current-main" class="hud-onair-main-text">請載入字幕檔，或按 [PageDown] 開始</div>
+          <div id="panel-sub-current-sub" class="hud-onair-sub-text" style="display:none;"></div>
+        </div>
+
+        <div class="hud-mini-row">
+          <span class="hud-mini-tag">NEXT</span>
+          <span id="panel-sub-next-text" class="hud-mini-text">-- 待命 --</span>
+        </div>
+      </div>
+
+      <!-- 完整劇本滾動列表 (支援點擊任意台詞即跳轉) -->
+      <div id="panel-sub-script-list" class="sub-panel-script-list">
+        <!-- 台詞項目由 JS 動態生成 -->
+      </div>
+
+      <!-- 底部快捷按鈕區 (Action Pad) -->
+      <div class="sub-panel-action-pad">
+        <button id="panel-sub-go-btn" class="btn-sub-act btn-sub-act-go" title="下一句字幕 (PageDown)">
+          <span>GO 下一句</span>
+          <small>[PageDown]</small>
+        </button>
+        <button id="panel-sub-blank-btn" class="btn-sub-act btn-sub-act-blank" title="黑幕隱藏字幕 (\ 鍵)">
+          <span id="panel-sub-blank-label">BLANK 黑幕</span>
+          <small>[\ 鍵]</small>
+        </button>
+        <button id="panel-sub-back-btn" class="btn-sub-act btn-sub-act-back" title="回上一句 (PageUp)">
+          <span>BACK 上一句</span>
+          <small>[PageUp]</small>
+        </button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 底部屬性面板 (Inspector Panel) -->
+  <footer class="inspector" id="inspector-panel">
+    <!-- 播放模式 (Show Mode) 唯讀檢查器 -->
+    <div class="inspector-show-view" id="inspector-show-view">
+      <div class="inspector-section" style="min-width: 220px;">
+        <div class="inspector-title">目前待命 / 選取 (Selected Cue)</div>
+        <div id="inspector-name" style="font-weight: 700; font-size: 1.05rem; color: #fff;">尚未選取</div>
+        <div id="inspector-type" style="color: #94a3b8; font-size: 0.8rem; margin-top: 4px;">-</div>
+      </div>
+
+      <div class="inspector-section" style="min-width: 200px;">
+        <div class="inspector-title">時間與時序 (Timing)</div>
+        <div class="inspector-input-row">
+          <span>Pre-wait:</span>
+          <span id="inspector-prewait" style="font-family: monospace; font-weight: 600;">0.0s</span>
+        </div>
+        <div class="inspector-input-row">
+          <span>Duration:</span>
+          <span id="inspector-duration" style="font-family: monospace; font-weight: 600;">0.0s</span>
+        </div>
+        <div class="inspector-input-row">
+          <span>Continue:</span>
+          <span id="inspector-continue" style="font-family: monospace; font-size: 0.8rem; color: #94a3b8;">不接續</span>
+        </div>
+      </div>
+
+      <div class="inspector-section" style="flex: 1;">
+        <div class="inspector-title">素材與目標 (Target)</div>
+        <div id="inspector-target" style="font-family: monospace; font-size: 0.85rem; word-break: break-all; color: #38bdf8;">-</div>
+      </div>
+
+      <div class="inspector-section" style="min-width: 220px;">
+        <div class="inspector-title">快速鍵提示 (Shortcuts)</div>
+        <div style="font-size: 0.72rem; color: #94a3b8; line-height: 1.5;">
+          • <b>[空白鍵]</b> : 執行 GO (Cue)<br/>
+          • <b>[↑ / ↓]</b> : 移動 Standby 游標<br/>
+          • <b>[PageDown]</b> : 下一句台詞字幕<br/>
+          • <b>[PageUp]</b> : 上一句字幕 / <b>[ \ ]</b> 黑幕<br/>
+          • <b>[Esc]</b> : 暫停 / 雙擊 Panic<br/>
+          • <b>[雙擊 Cue / 字幕]</b> : 緊急立刻播放
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯模式 (Edit Mode) 完整互動屬性編輯器 -->
+    <div class="inspector-edit-view" id="inspector-edit-view" style="display: none;">
+      <div class="edit-prop-group" style="min-width: 200px;">
+        <div class="inspector-title">識別資訊 (Identity)</div>
+        <div class="form-row">
+          <label>編號:</label>
+          <input type="text" id="edit-cue-number" class="form-input" placeholder="例: 0.1">
+        </div>
+        <div class="form-row">
+          <label>名稱:</label>
+          <input type="text" id="edit-cue-name" class="form-input" placeholder="Cue 名稱">
+        </div>
+        <div class="form-row">
+          <label>類型:</label>
+          <select id="edit-cue-type" class="form-select">
+            <option value="GroupCue">GroupCue (群組)</option>
+            <option value="AudioCue">AudioCue (音訊)</option>
+            <option value="VideoCue">VideoCue (視訊/影片)</option>
+            <option value="ImageCue">ImageCue (純圖片/投影片)</option>
+            <option value="FadeCue">FadeCue (淡化)</option>
+            <option value="StopCue">StopCue (停止)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="edit-prop-group" style="min-width: 220px;">
+        <div class="inspector-title">時間設定 (Timing)</div>
+        <div class="form-row">
+          <label>Pre-Wait:</label>
+          <input type="number" id="edit-cue-prewait" class="form-input" step="0.1" min="0" value="0.0">
+          <span class="unit">秒</span>
+        </div>
+        <div class="form-row">
+          <label>Duration:</label>
+          <input type="number" id="edit-cue-duration" class="form-input" step="0.1" min="0" value="0.0">
+          <span class="unit">秒</span>
+        </div>
+        <div class="form-row">
+          <label>Post-Wait:</label>
+          <input type="number" id="edit-cue-postwait" class="form-input" step="0.1" min="0" value="0.0">
+          <span class="unit">秒</span>
+        </div>
+      </div>
+
+      <div class="edit-prop-group" style="min-width: 220px;">
+        <div class="inspector-title">接續與群組行為</div>
+        <div class="form-row">
+          <label>接續模式:</label>
+          <select id="edit-cue-continue" class="form-select">
+            <option value="0">0: 不接續 (Do Not Continue)</option>
+            <option value="1">1: 自動接續 (Auto-Continue)</option>
+            <option value="2">2: 接續後執行 (Auto-Follow)</option>
+          </select>
+        </div>
+        <div class="form-row" id="row-group-mode">
+          <label>群組模式:</label>
+          <select id="edit-cue-groupmode" class="form-select">
+            <option value="3">3: 同時播放全部子項 (Simultaneous)</option>
+            <option value="1">1: 依序播放 (Timeline / Playlist)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="edit-prop-group" style="flex: 1; min-width: 260px;">
+        <div class="inspector-title">素材與目標 (Target)</div>
+        <div class="form-row" style="margin-bottom: 6px;">
+          <input type="text" id="edit-cue-target" class="form-input" placeholder="素材路徑 (例: video/04 作品集.mp4)" style="flex: 1;">
+          <button id="btn-browse-media" class="tool-btn btn-highlight" style="margin-left: 6px;">📂 選擇素材</button>
+        </div>
+        <div class="form-row" style="margin-top: 4px;">
+          <button id="btn-insp-audition" class="tool-btn btn-audition" style="padding: 6px 14px; font-size: 0.82rem;">▶️ 試聽選取 Cue</button>
+        </div>
+        <div id="fade-options-container" class="fade-options" style="display: none; margin-top: 6px; padding: 6px 10px; background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 4px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 0.78rem; font-weight: 600; color: #94a3b8;">淡化模式:</span>
+            <select id="edit-fade-mode" class="form-input" style="width: auto; padding: 3px 8px; font-size: 0.8rem;">
+              <option value="fade-out">📉 淡出 (Fade Out / 畫面與聲音歸零)</option>
+              <option value="fade-in">📈 淡入 (Fade In / 畫面與聲音升至 100%)</option>
+            </select>
+            <div id="row-fade-stop-target" style="display: inline-flex; align-items: center;">
+              <label style="font-size: 0.8rem; cursor: pointer; color: #cbd5e1; display: flex; align-items: center; gap: 4px; margin: 0;">
+                <input type="checkbox" id="edit-fade-stop-target" checked> 執行完停止目標 (Stop target)
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 監視預覽浮動視窗 (Audition / Monitor Preview Box) -->
+  <div id="audition-preview-box" class="audition-preview-box" style="display: none;">
+    <div class="preview-header">
+      <span id="preview-title">🎬 監視器預覽 (Monitor)</span>
+      <button id="btn-close-preview" class="btn-close-preview" title="關閉預覽">&times;</button>
+    </div>
+    <div class="preview-content">
+      <video id="preview-video" style="display: none;" playsinline controls></video>
+      <img id="preview-image" style="display: none;" alt="Preview">
+    </div>
+  </div>
+
+  <!-- 專案媒體庫瀏覽視窗 (Media Browser Modal) -->
+  <div class="modal-backdrop" id="media-modal" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>📂 專案媒體庫瀏覽器 (Media Asset Browser)</h3>
+        <button id="btn-close-media-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- 集中管理素材資料夾路徑選擇橫幅 -->
+        <div class="media-folder-banner">
+          <div class="folder-banner-info">
+            <span class="folder-label">📁 素材資料夾:</span>
+            <input type="text" id="media-folder-path" class="form-input" placeholder="素材資料夾路徑..." title="可手動輸入路徑並按 Enter 或點擊套用">
+          </div>
+          <div class="folder-banner-actions">
+            <button id="btn-change-media-folder" class="tool-btn btn-highlight" title="開啟系統資料夾挑選對話框">📂 瀏覽資料夾...</button>
+            <button id="btn-apply-media-folder" class="tool-btn" title="套用輸入的資料夾路徑">套用</button>
+            <button id="btn-refresh-media-folder" class="tool-btn" title="重新掃描素材檔案">🔄 重新整理</button>
+          </div>
+        </div>
+
+        <div class="media-filter-bar">
+          <input type="text" id="media-search-input" placeholder="🔍 搜尋檔名或路徑 (如: 06, click, mp4)..." class="form-input">
+          <div class="filter-pills">
+            <button class="filter-pill active" data-filter="all">全部</button>
+            <button class="filter-pill" data-filter="audio">音訊 (Audio)</button>
+            <button class="filter-pill" data-filter="video">視訊 (Video)</button>
+            <button class="filter-pill" data-filter="image">圖片 (Image)</button>
+          </div>
+        </div>
+        <div class="media-file-list" id="media-file-list">
+          <!-- Dynamically populated files -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span id="media-modal-count" style="font-size: 0.8rem; color: #94a3b8;">載入中...</span>
+        <button id="btn-cancel-media-modal" class="tool-btn">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 專案啟動選擇視窗 (Project Launcher Modal) -->
+  <div class="modal-backdrop" id="project-launcher-modal" style="display: none;">
+    <div class="modal-dialog launcher-dialog">
+      <div class="modal-header">
+        <h3>🎭 專案啟動與選擇 (Project Launcher)</h3>
+        <button id="btn-close-launcher-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body launcher-body">
+        <div class="launcher-intro">請選擇開啟方式以開始製作或執行演出工作檔：</div>
+        <div class="launcher-grid">
+          <!-- 卡片 1: 建立全新專案 -->
+          <div class="launcher-card" id="card-action-new">
+            <div class="launcher-icon">📄</div>
+            <div class="launcher-card-title">建立全新空白專案</div>
+            <div class="launcher-card-desc">建立空的演出 Cue 清單，自行設定專案名稱並集中放置演出素材。</div>
+            <button id="btn-launcher-new" class="tool-btn btn-highlight launcher-btn">建立新專案</button>
+          </div>
+          <!-- 卡片 2: 開啟現有專案檔 -->
+          <div class="launcher-card" id="card-action-open">
+            <div class="launcher-icon">📂</div>
+            <div class="launcher-card-title">開啟現有專案檔</div>
+            <div class="launcher-card-desc">載入電腦中的 QLab 5 (.qlab5)、Cue Master (.cuemaster) 或 JSON 專案檔。</div>
+            <button id="btn-launcher-open" class="tool-btn launcher-btn">開啟專案檔...</button>
+          </div>
+          <!-- 卡片 3: 載入《星星月月》示範專案 -->
+          <div class="launcher-card" id="card-action-sample">
+            <div class="launcher-icon">🎭</div>
+            <div class="launcher-card-title">載入《星星月月》示範專案</div>
+            <div class="launcher-card-desc">載入具備完整音訊、視訊、圖片、淡化與停止設定的舞臺劇示範工作檔。</div>
+            <button id="btn-launcher-sample" class="tool-btn launcher-btn">載入示範專案</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 建立新專案對話框 (New Project Modal) -->
+  <div class="modal-backdrop" id="new-project-modal" style="display: none;">
+    <div class="modal-dialog" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3>📄 建立全新劇場專案 (Create New Project)</h3>
+        <button id="btn-close-new-project-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" style="gap: 16px;">
+        <div class="form-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+          <label style="font-weight: 600; color: #f1f5f9;">專案名稱 (Project Title):</label>
+          <input type="text" id="new-project-title-input" class="form-input" placeholder="例如: 2026 年度大戲《羅密歐與茱麗葉》" value="未命名劇場專案">
+        </div>
+        <div class="form-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+          <label style="font-weight: 600; color: #f1f5f9;">專案素材資料夾 (Media Assets Folder):</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="new-project-folder-input" class="form-input" style="flex: 1;" placeholder="請選擇或輸入集中放置素材的資料夾...">
+            <button id="btn-browse-new-project-folder" class="tool-btn btn-highlight" style="white-space: nowrap;">📂 選擇資料夾...</button>
+          </div>
+          <span style="font-size: 0.76rem; color: #94a3b8; line-height: 1.4;">
+            💡 系統將從此資料夾讀取本劇的所有音訊、視訊與圖片素材。
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="btn-cancel-new-project" class="tool-btn">取消</button>
+        <button id="btn-confirm-new-project" class="tool-btn btn-highlight" style="padding: 6px 18px; font-weight: 600;">✅ 建立專案</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隱藏檔案載入 Input -->
+  <input type="file" id="file-input-project" accept=".qlab5,.cuemaster,.json" style="display: none;">
+
+  <!-- Toast 訊息通知 -->
+  <div id="toast" class="toast"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

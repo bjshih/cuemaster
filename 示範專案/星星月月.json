@@ -1,0 +1,200 @@
+{
+  "format": "CueMaster",
+  "version": "2.0.0",
+  "title": "星星月月",
+  "mediaBasePath": "D:\\工作區\\QLAB\\示範專案\\media",
+  "rootCue": {
+    "id": "cue_root",
+    "type": "GroupCue",
+    "number": "",
+    "name": "Main Cue List",
+    "preWait": 0,
+    "duration": 0,
+    "postWait": 0,
+    "continueMode": 0,
+    "groupMode": 1,
+    "fileTarget": "",
+    "children": [
+      {
+        "id": "cue_1",
+        "type": "GroupCue",
+        "number": "1",
+        "name": "場次一：星夜啟程",
+        "preWait": 0,
+        "duration": 0,
+        "postWait": 0,
+        "continueMode": 0,
+        "groupMode": 3,
+        "fileTarget": "",
+        "children": [
+          {
+            "id": "cue_1_1",
+            "type": "VideoCue",
+            "number": "1.1",
+            "name": "背景星空夜幕",
+            "preWait": 0,
+            "duration": 25,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fileTarget": "video/星空夜幕.mp4",
+            "children": []
+          },
+          {
+            "id": "cue_1_2",
+            "type": "FadeCue",
+            "number": "1.2",
+            "name": "淡入星空夜幕",
+            "preWait": 0,
+            "duration": 2,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fadeMode": "fade-in",
+            "stopTargetWhenDone": false,
+            "fileTarget": "",
+            "children": []
+          },
+          {
+            "id": "cue_1_3",
+            "type": "AudioCue",
+            "number": "1.3",
+            "name": "星星旋律 PGM 主軌",
+            "preWait": 0.5,
+            "duration": 30,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fileTarget": "audio/星星旋律_PGM.mp3",
+            "children": []
+          },
+          {
+            "id": "cue_1_4",
+            "type": "AudioCue",
+            "number": "1.4",
+            "name": "星星旋律 Click 監聽軌",
+            "preWait": 0.5,
+            "duration": 30,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fileTarget": "audio/星星旋律_Click.mp3",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "cue_2",
+        "type": "GroupCue",
+        "number": "2",
+        "name": "場次二：月光詠嘆",
+        "preWait": 0,
+        "duration": 0,
+        "postWait": 0,
+        "continueMode": 0,
+        "groupMode": 3,
+        "fileTarget": "",
+        "children": [
+          {
+            "id": "cue_2_1",
+            "type": "ImageCue",
+            "number": "2.1",
+            "name": "星星月月主視覺圖",
+            "preWait": 0,
+            "duration": 20,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fileTarget": "images/星星月月主視覺.png",
+            "children": []
+          },
+          {
+            "id": "cue_2_2",
+            "type": "FadeCue",
+            "number": "2.2",
+            "name": "淡入主視覺",
+            "preWait": 0,
+            "duration": 1.5,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fadeMode": "fade-in",
+            "stopTargetWhenDone": false,
+            "fileTarget": "",
+            "children": []
+          },
+          {
+            "id": "cue_2_3",
+            "type": "FadeCue",
+            "number": "2.3",
+            "name": "淡出星空夜幕",
+            "preWait": 1,
+            "duration": 2.5,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fadeMode": "fade-out",
+            "stopTargetWhenDone": true,
+            "fileTarget": "",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "cue_3",
+        "type": "GroupCue",
+        "number": "3",
+        "name": "場次三：星月相映",
+        "preWait": 0,
+        "duration": 0,
+        "postWait": 0,
+        "continueMode": 0,
+        "groupMode": 1,
+        "fileTarget": "",
+        "children": [
+          {
+            "id": "cue_3_1",
+            "type": "ImageCue",
+            "number": "3.1",
+            "name": "過場黑幕",
+            "preWait": 0,
+            "duration": 5,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fileTarget": "images/黑幕.png",
+            "children": []
+          },
+          {
+            "id": "cue_3_2",
+            "type": "FadeCue",
+            "number": "3.2",
+            "name": "淡出全場畫面",
+            "preWait": 0,
+            "duration": 3,
+            "postWait": 3,
+            "continueMode": 1,
+            "groupMode": 1,
+            "fadeMode": "fade-out",
+            "stopTargetWhenDone": true,
+            "fileTarget": "",
+            "children": []
+          },
+          {
+            "id": "cue_3_3",
+            "type": "StopCue",
+            "number": "3.3",
+            "name": "停止全場影音",
+            "preWait": 1,
+            "duration": 0,
+            "postWait": 0,
+            "continueMode": 0,
+            "groupMode": 1,
+            "fileTarget": "",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

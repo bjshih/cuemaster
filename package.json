@@ -1,0 +1,67 @@
+{
+  "name": "cue-master",
+  "version": "1.0.0",
+  "description": "Cross-platform Theater Show Playback & Cue Control System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "test": "python tests/test_runner.py && node tests/test_api_endpoints.js && node tests/test_subtitle_deck.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "theater",
+    "cue",
+    "playback",
+    "qlab",
+    "show-control"
+  ],
+  "author": "Cue Master Project",
+  "license": "MIT",
+  "build": {
+    "appId": "com.cuemaster.app",
+    "productName": "Cue Master",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Cue Master"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "files": [
+      "main.js",
+      "project_service.js",
+      "src/**/*",
+      "package.json",
+      "public/**/*",
+      "示範專案/**/*"
+    ]
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^40.4.0",
+    "electron-builder": "^26.7.0"
+  }
+}
